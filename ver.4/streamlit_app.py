@@ -8,6 +8,7 @@ import joblib
 import re
 import os
 import time
+import base64
 
 # 현재 스크립트의 디렉토리 경로
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -62,7 +63,7 @@ def get_recommendations(query, cosine_sim=cosine_sim):
     sim_scores = sim_scores.flatten()
     similar_webtoons = sorted(list(enumerate(sim_scores)), key=lambda x: x[1], reverse=True)
     
-    return similar_webtoons[:2]  # 상위 2개만 반환
+    return similar_webtoons[:3]  # 상위 3개만 반환
 
 def recommend_webtoons(query):
     try:
@@ -86,13 +87,53 @@ def recommend_webtoons(query):
         st.error(f"Error occurred: {e}")
         return "추천 과정에서 오류가 발생했습니다. 다른 질문을 해주시겠어요?"
 
+# 아이콘 이미지를 Base64로 인코딩하는 함수
+def get_image_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+# 스타일 설정
+def set_page_style():
+    st.markdown("""
+    <style>
+    .stApp {
+        background-color: #f0f0f5;
+    }
+    .stTextInput > div > div > input {
+        background-color: #ffffff;
+    }
+    .stChatMessage {
+        background-color: #ffffff;
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .stChatMessage.user {
+        background-color: #DCF8C6;
+    }
+    .stChatMessage.assistant {
+        background-color: #E2E2E2;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 커스텀 아이콘 설정
+user_icon = get_image_base64("C:/Users/gadi2/OneDrive/바탕 화면/study file/240827_chatbot/ver.4/1.jpg")
+assistant_icon = get_image_base64("C:/Users/gadi2/OneDrive/바탕 화면/study file/240827_chatbot/ver.4/2.jpg")
+
 # Streamlit UI
+set_page_style()
+
 st.title("웹툰 추천 챗봇")
 
 # 초기화
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "assistant", "content": "안녕하세요! 웹툰 추천 챗봇입니다. 어떤 웹툰을 찾고 계신가요?"})
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": "안녕하세요! 웹툰 추천 챗봇입니다. 어떤 웹툰을 찾고 계신가요?",
+        "avatar": f"data:image/png;base64,{assistant_icon}"
+    })
 
 # 종료 상태 확인
 if "should_rerun" not in st.session_state:
@@ -102,12 +143,12 @@ if "countdown" not in st.session_state:
 
 # 채팅 기록 표시
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    with st.chat_message(message["role"], avatar=message.get("avatar")):
         st.markdown(message["content"])
 
 # 카운트다운 표시
 if st.session_state.countdown > 0:
-    st.write(f"화면이 초기화되기까지 {st.session_state.countdown}초 남았습니다.")
+    st.info(f"화면이 초기화되기까지 {st.session_state.countdown}초 남았습니다.")
     st.session_state.countdown -= 1
     time.sleep(1)
     st.rerun()
@@ -117,8 +158,12 @@ if st.session_state.countdown == 0:
     prompt = st.chat_input("원하는 웹툰에 대해 설명해주세요:")
     if prompt:
         # 사용자 메시지 추가
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+        st.session_state.messages.append({
+            "role": "user",
+            "content": prompt,
+            "avatar": f"data:image/png;base64,{user_icon}"
+        })
+        with st.chat_message("user", avatar=f"data:image/png;base64,{user_icon}"):
             st.markdown(prompt)
 
         # 종료 요청 확인
@@ -131,8 +176,12 @@ if st.session_state.countdown == 0:
             response = recommend_webtoons(prompt)
 
         # 챗봇 응답 추가
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        with st.chat_message("assistant"):
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response,
+            "avatar": f"data:image/png;base64,{assistant_icon}"
+        })
+        with st.chat_message("assistant", avatar=f"data:image/png;base64,{assistant_icon}"):
             st.markdown(response)
 
         st.rerun()
@@ -150,5 +199,5 @@ st.sidebar.write("""
 2. 예: "학교를 배경으로 하는 로맨스 웹툰" 또는 "액션 판타지 웹툰"
 3. 엔터를 누르면 챗봇이 웹툰을 추천해줍니다.
 4. 추천된 웹툰 목록을 확인하세요!
-5. 대화를 종료하려면 "종료", "끝", "그만", "quit", "exit" 중 하나를 입력하세요.
+5. 대화를 종료하려면 "종료", "끝", "그만", "quit", "exit",'바이','bye' 중 하나를 입력하세요.
 """)
