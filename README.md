@@ -7,7 +7,7 @@
 - 기간 : 2024.8.27. ~ 8.28.
 - **사용 기술 및 스택**
     - **프로그래밍 언어**: Python
-    - **프레임워크**: Streamlit (웹 인터페이스 구현)
+    - **프레임워크**: Streamlit (웹 인터페이스 구현), Langchain(버전3에서 시도)
     - **데이터 분석 및 처리**: Pandas, Numpy
     - **자연어 처리**: konlpy, TfidfVectorizer, Word2Vec
     - **머신러닝 및 모델링**: scikit-learn, Gensim, Sentence-BERT
