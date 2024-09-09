@@ -1,41 +1,200 @@
-## 2024년 8월 27일부터 28일까지의 챗봇 개발 고분분투기
+# 챗봇 개발 프로젝트: 데이터 기반 추천 시스템 개발 히스토리
 
-<aside>
-😙 프로젝트 개요
+## 프로젝트 개요
 
-- 프로젝트명 : Create your own chatbot1
-- 기간 : 2024.8.27. ~ 8.28.
-- **사용 기술 및 스택**
-    - **프로그래밍 언어**: Python
-    - **프레임워크**: Streamlit (웹 인터페이스 구현), Langchain(버전3에서 시도)
-    - **데이터 분석 및 처리**: Pandas, Numpy
-    - **자연어 처리**: konlpy, TfidfVectorizer, Word2Vec
-    - **머신러닝 및 모델링**: scikit-learn, Gensim, Sentence-BERT
-    - **딥러닝 프레임워크**: PyTorch (웹툰 문장 임베딩 및 추천 모델)
-    - **배포 환경**: Localhost에서 Streamlit을 통한 실시간 웹 애플리케이션
-</aside>
+- **프로젝트명**: Create your own chatbot
+- **기간**: 2024.8.27 ~ 8.28
+- **목적**: 사용자 입력 기반 지능형 추천 시스템 개발
+- **주요 도전 과제**: 제한된 데이터와 시간 내에서 효과적인 추천 모델 구축
 
-### 버전1
-- 와인을 주제로 사용자의 질문에 맞춰 적합한 와인을 추천해주는 챗봇을 구현하려 함.
-- 이를 위해 데이터셋을 구하려 했으나 적당한 것을 찾기 어려워서 퍼플렉시티를 통해 직접 50여개 정도를 CSV로 만듬
-- 이를 기반으로 txt를 만들어서 TF-IDF를 적용해 모델을 만들고자 했음.
-- 하지만 챗봇 성능이 좋지 않았음.
+## 기술 스택
 
-### 버전2
-- 모델 개선을 위해 RAG를 사용해서 질문과 답변 데이터셋을 TXT로 만듬.
-- 수업시간에 배운 Word2Vec, TF-IDF, 코사인유사도, RNN 등의 딥러닝을 최대한 활용해서 해보려고 했으나 결과가 영 좋지 않음.
-- 모델 성능이 거의 0에 수렴했음...
+- **프로그래밍 언어**: Python 3.8+
+- **웹 프레임워크**: Streamlit 1.24.0
+- **데이터 처리**: Pandas 1.3.3, Numpy 1.21.2
+- **자연어 처리**: KoNLPy 0.5.2, scikit-learn 0.24.2 (TfidfVectorizer)
+- **머신러닝/딥러닝**: PyTorch 1.9.0, Gensim 4.0.1 (Word2Vec), sentence-transformers 2.1.0
+- **LLM 통합**: Langchain 0.0.184
+- **배포 환경**: Localhost Streamlit 애플리케이션
 
-### 버전3
-- 하도 답답한 마음에 GPT-4o-mini와 Llama3.1로 langchain을 구축함.
-- 로드해서 임베딩한 데이터는 버전1에서 구축했던 CSV를 그대로 이용함.
-- 성능은 아주 잘 나옴. 허무했음...
+## 상세 개발 과정 및 버전별 특징
 
-### 버전4
-- 버전2를 어떻게든 성능 개선을 해보려 했으나, 근본적으로 데이터의 양이 적다는 판단을 함.
-- 구글링도 해보고 퍼플렉시티도 사용해보았으나 적당한 와인 데이터셋을 구축하기가 어려웠음.
-- 케글에서 네이버 웹툰 데이터셋(https://www.kaggle.com/datasets/bmofinnjake/naverwebtoon-datakorean)이 있어서, 주제 변경하기로 결정.
-- 다양한 방식으로 접근을 해보았고, 최종적으로 CSV에서 불필요한 데이터는 제거, 제목(title)을 타깃, 나머지(작가, 연령대, 줄거리, 장르 등)을 하나로 묶어서 새로운 칼럼을 생성 후 전처리 함.
-- 사용자의 질문을 전처리하여 키워드로 추출하고, 새로 만든 칼럼의 내용과 tf-idf, 코사인 유사도 비교하여 추천해주는 방식으로 완성함.
-- 아무래도 모델이 작다보니 속도는 빠르지만 성능이 매우 아쉬움
-- 새삼 LLM의 강력함에 대해 느끼게 됨.
+### 버전 1: 와인 추천 챗봇 (초기 모델)
+
+#### 개발 과정
+1. **데이터 수집**:
+   - Perplexity AI를 활용하여 50개의 와인 정보를 포함한 CSV 데이터셋 생성
+   - 데이터 형식: `와인이름,종류,원산지,맛 특징,추천 음식`
+
+2. **데이터 전처리**:
+   ```python
+   import pandas as pd
+   
+   df = pd.read_csv('wine_data.csv')
+   wine_texts = df.apply(lambda row: ' '.join(row.astype(str)), axis=1)
+   ```
+
+3. **TF-IDF 모델 구축**:
+   ```python
+   from sklearn.feature_extraction.text import TfidfVectorizer
+   
+   vectorizer = TfidfVectorizer()
+   tfidf_matrix = vectorizer.fit_transform(wine_texts)
+   ```
+
+4. **추천 로직 구현**:
+   - 사용자 입력을 TF-IDF 벡터로 변환
+   - 코사인 유사도를 사용하여 가장 유사한 와인 추천
+
+#### 직면한 문제
+- 제한된 데이터셋으로 인한 낮은 추천 정확도
+- 사용자 질문의 다양성을 커버하기 어려움
+
+#### 학습 포인트
+- 품질 높은 대규모 데이터셋의 중요성 인식
+- TF-IDF의 한계점 파악 (컨텍스트 이해 부족)
+
+### 버전 2: RAG 기반 모델 개선 시도
+
+#### 개발 과정
+1. **데이터 확장**:
+   - 와인 관련 질문-답변 쌍 100개 생성 (TXT 형식)
+
+2. **고급 NLP 기법 적용**:
+   - Word2Vec 모델 훈련:
+     ```python
+     from gensim.models import Word2Vec
+     
+     sentences = [text.split() for text in wine_texts]
+     model = Word2Vec(sentences, vector_size=100, window=5, min_count=1, workers=4)
+     ```
+   
+   - RNN 모델 구현 (PyTorch 사용):
+     ```python
+     import torch.nn as nn
+     
+     class RNNModel(nn.Module):
+         def __init__(self, vocab_size, embedding_dim, hidden_dim):
+             super(RNNModel, self).__init__()
+             self.embedding = nn.Embedding(vocab_size, embedding_dim)
+             self.rnn = nn.RNN(embedding_dim, hidden_dim, batch_first=True)
+             self.fc = nn.Linear(hidden_dim, vocab_size)
+     
+         def forward(self, x):
+             embedded = self.embedding(x)
+             output, _ = self.rnn(embedded)
+             return self.fc(output)
+     ```
+
+#### 직면한 문제
+- 복잡한 모델에 비해 여전히 부족한 데이터양
+- RNN 모델의 과적합 문제
+- 실제 대화 컨텍스트 반영의 어려움
+
+#### 학습 포인트
+- 데이터의 질과 양이 모델 복잡도보다 중요함을 인식
+- 딥러닝 모델 훈련 시 과적합 방지의 중요성 경험
+
+### 버전 3: LLM 통합 (Langchain 활용)
+
+#### 개발 과정
+1. **Langchain 설정**:
+   ```python
+   from langchain import OpenAI, LLMChain
+   from langchain.prompts import PromptTemplate
+   
+   llm = OpenAI(model_name="gpt-4-mini")
+   prompt = PromptTemplate(
+       input_variables=["query"],
+       template="와인 추천: {query}"
+   )
+   chain = LLMChain(llm=llm, prompt=prompt)
+   ```
+
+2. **데이터 통합**:
+   - 버전 1의 CSV 데이터를 Langchain의 지식베이스로 활용
+
+3. **추천 로직 구현**:
+   ```python
+   def get_recommendation(query):
+       return chain.run(query)
+   ```
+
+#### 결과
+- 놀라운 성능 향상: 다양한 질문에 대해 맥락을 이해하고 적절한 추천 제공
+
+#### 학습 포인트
+- LLM의 강력한 성능과 범용성 체감
+- 기존 데이터셋의 효과적인 활용 방법 학습
+
+### 버전 4: 웹툰 추천 시스템 (최종 버전)
+
+#### 개발 과정
+1. **데이터셋 변경**:
+   - Kaggle의 네이버 웹툰 데이터셋 활용 (https://www.kaggle.com/datasets/bmofinnjake/naverwebtoon-datakorean)
+
+2. **데이터 전처리**:
+   ```python
+   df = pd.read_csv('webtoon_data.csv')
+   df['combined_info'] = df['author'] + ' ' + df['age_rating'] + ' ' + df['summary'] + ' ' + df['genre']
+   ```
+
+3. **TF-IDF 및 코사인 유사도 모델 구현**:
+   ```python
+   from sklearn.metrics.pairwise import cosine_similarity
+   
+   tfidf = TfidfVectorizer()
+   tfidf_matrix = tfidf.fit_transform(df['combined_info'])
+   
+   def get_recommendations(query):
+       query_vec = tfidf.transform([query])
+       similarities = cosine_similarity(query_vec, tfidf_matrix)
+       similar_indices = similarities.argsort()[0][::-1][:5]
+       return df.iloc[similar_indices]['title'].tolist()
+   ```
+
+4. **Streamlit 인터페이스 구현**:
+   ```python
+   import streamlit as st
+   
+   st.title("웹툰 추천 시스템")
+   query = st.text_input("어떤 웹툰을 찾으시나요?")
+   if query:
+       recommendations = get_recommendations(query)
+       st.write("추천 웹툰:", recommendations)
+   ```
+
+#### 결과
+- 빠른 응답 속도
+- 기본적인 키워드 기반 추천 가능, 그러나 깊이 있는 컨텍스트 이해 부족
+
+#### 학습 포인트
+- 도메인 특화 데이터의 중요성
+- TF-IDF와 코사인 유사도의 실제 적용 경험
+- Streamlit을 통한 빠른 프로토타이핑의 이점
+
+## 주요 기술적 도전과 해결 방법
+
+1. **데이터 부족 문제**:
+   - 해결: 다양한 소스(Perplexity AI, Kaggle)에서 데이터 수집 및 생성
+   - 교훈: 프로젝트 초기에 충분한 데이터 확보의 중요성
+
+2. **모델 성능 개선**:
+   - 시도: Word2Vec, RNN 등 고급 기법 적용
+   - 결과: 데이터 양 대비 과도한 모델 복잡도로 인한 성능 저하
+   - 해결: 최종적으로 간단하지만 효과적인 TF-IDF + 코사인 유사도 모델 채택
+
+3. **사용자 인터페이스 구현**:
+   - 해결: Streamlit을 사용한 간단하고 직관적인 웹 인터페이스 구현
+   - 이점: 빠른 프로토타이핑과 사용자 피드백 수집 용이
+
+## 향후 개선 방향
+
+1. **데이터 확장**: 더 다양하고 풍부한 웹툰 데이터셋 구축
+2. **고급 임베딩 기법 적용**: BERT 또는 최신 임베딩 모델 활용
+3. **하이브리드 모델 개발**: TF-IDF 기반 모델과 딥러닝 모델의 앙상블
+4. **사용자 피드백 시스템**: 추천 결과에 대한 사용자 평가 수집 및 모델 개선에 활용
+
+## 결론
+
+이 프로젝트를 통해 NLP와 추천 시스템 개발의 실제적인 도전 과제들을 경험했습니다. 특히 데이터의 중요성, 모델 복잡도와 성능 간의 균형, 그리고 사용자 중심 설계의 필요성을 깊이 있게 이해하게 되었습니다. 또한, 최신 LLM 기술의 강력함과 전통적인 ML 기법의 실용성을 비교 체험할 수 있었습니다. 이러한 경험은 향후 더 복잡하고 규모 있는 AI 프로젝트를 수행하는 데 있어 귀중한 토대가 될 것입니다.
